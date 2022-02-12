@@ -82,8 +82,8 @@ pub mod png_merkle_distributor {
         let claim_status = &mut ctx.accounts.claim_status;
         require!(
             // This check is redundant, we should not be able to initialize a claim status account at the same key.
-            claim_status.claimed_amount<amount,
-            ExceededMaxClaim
+            claim_status.claimed_amount < amount,
+            NoClaimableAmount
         );
 
         let claimant_account = &ctx.accounts.claimant;
@@ -101,11 +101,7 @@ pub mod png_merkle_distributor {
             InvalidProof
         );
 
-        require!(
-            amount-claim_status.claimed_amount>0,
-            ExceededMaxClaim
-        );
-        let distribute_num = amount.checked_sub(claim_status.claimed_amount).unwrap();
+        let claim_amount = amount.checked_sub(claim_status.claimed_amount).unwrap();
 
         // Mark it claimed and send the tokens.
         claim_status.claimed_amount = amount;
@@ -137,8 +133,8 @@ pub mod png_merkle_distributor {
                     authority: ctx.accounts.distributor.to_account_info(),
                 },
             )
-                .with_signer(&[&seeds[..]]),
-            distribute_num,
+            .with_signer(&[&seeds[..]]),
+            claim_amount,
         )?;
 
         let distributor = &mut ctx.accounts.distributor;
@@ -148,8 +144,9 @@ pub mod png_merkle_distributor {
             distributor.total_amount_claimed <= distributor.max_total_claim,
             ExceededMaxClaim
         );
-        if distribute_num == amount {
-            distributor.num_nodes_claimed = unwrap_int!(distributor.num_nodes_claimed.checked_add(1));
+        if claim_amount == amount {
+            distributor.num_nodes_claimed =
+                unwrap_int!(distributor.num_nodes_claimed.checked_add(1));
             require!(
                 distributor.num_nodes_claimed <= distributor.max_num_nodes,
                 ExceededMaxNumNodes
@@ -159,7 +156,7 @@ pub mod png_merkle_distributor {
         emit!(ClaimedEvent {
             index,
             claimant: claimant_account.key(),
-            distribute_num
+            claim_amount
         });
         Ok(())
     }
@@ -207,9 +204,7 @@ pub struct UpdateDistributor<'info> {
     /// Payer to create the distributor.
     #[account(mut)]
     pub payer: Signer<'info>,
-
 }
-
 
 /// [png_merkle_distributor::claim] accounts.
 #[derive(Accounts)]
@@ -300,7 +295,7 @@ pub struct ClaimedEvent {
     /// User that claimed.
     pub claimant: Pubkey,
     /// Amount of tokens to distribute.
-    pub distribute_num: u64,
+    pub claim_amount: u64,
 }
 
 /// Error codes.
@@ -320,5 +315,6 @@ pub enum ErrorCode {
     OwnerMismatch,
     #[msg("Base account not match distributor creator")]
     DistributorCreatorMismatch,
+    #[msg("no claimable amount")]
+    NoClaimableAmount,
 }
-
