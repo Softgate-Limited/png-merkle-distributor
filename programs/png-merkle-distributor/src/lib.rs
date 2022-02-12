@@ -150,11 +150,11 @@ pub mod png_merkle_distributor {
         );
         if claimedBefore == 0 {
             distributor.num_nodes_claimed = unwrap_int!(distributor.num_nodes_claimed.checked_add(1));
+            require!(
+                distributor.num_nodes_claimed <= distributor.max_num_nodes,
+                ExceededMaxNumNodes
+            );
         }
-        require!(
-            distributor.num_nodes_claimed <= distributor.max_num_nodes,
-            ExceededMaxNumNodes
-        );
 
         emit!(ClaimedEvent {
             index,
@@ -197,7 +197,6 @@ pub struct NewDistributor<'info> {
 
 /// Accounts for [png_merkle_distributor::new_distributor].
 #[derive(Accounts)]
-#[instruction(bump: u8)]
 pub struct UpdateDistributor<'info> {
     /// Base key of the distributor.
     pub base: Signer<'info>,
@@ -287,8 +286,6 @@ pub struct MerkleDistributor {
 #[account]
 #[derive(Default)]
 pub struct ClaimStatus {
-    /// If true, the tokens have been claimed.
-    pub is_claimed: bool,
     /// Authority that claimed the tokens.
     pub claimant: Pubkey,
     /// When the tokens were claimed.
