@@ -13,7 +13,6 @@ const [provider, payer] = [program.provider, program.provider.wallet.publicKey];
 const MAX_NUM_NODES = new BN(3);
 const MAX_TOTAL_CLAIM = new BN(1_000_000_000_000);
 const airDropMintKeypair = Keypair.generate();
-const dropKeypair = Keypair.generate();
 const creatorKeypair = Keypair.generate();
 const airDropMint = airDropMintKeypair.publicKey;
 const airDropMintDecimals = 6;
@@ -22,7 +21,7 @@ let distributor, distributorHolder: PublicKey;
 const kpOne = Keypair.generate();
 const kpTwo = Keypair.generate();
 const kpThree = Keypair.generate();
-describe("merkle-distributor", () => {
+describe("png-merkle-distributor", () => {
     context("claim", () => {
         it("init", async () => {
             await provider.send(
@@ -91,11 +90,6 @@ describe("merkle-distributor", () => {
 
             await provider.send(
                 new Transaction().add(
-                    await createAssociatedTokenAccount(
-                        payer,
-                        dropKeypair.publicKey,
-                        airDropMint
-                    ),
                     await createAssociatedTokenAccount(
                         payer,
                         distributor,
