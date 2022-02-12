@@ -108,7 +108,7 @@ pub mod png_merkle_distributor {
 
         // Mark it claimed and send the tokens.
         // 1. rust局部变量不要用驼峰
-        // 2. amount不需要检查下吗？如果amount - claim_status.amount, 就不该往下执行了
+        // 2. amount不需要检查下吗？如果amount - claim_status.amount <= 0, 就不该往下执行了
         let claimedBefore = claim_status.amount;
         claim_status.amount = amount;
         let clock = Clock::get()?;
