@@ -62,7 +62,7 @@ pub mod png_merkle_distributor {
         max_num_nodes: u64,
     ) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
-        require!(
+        require!( // 这个检查可以用anchor的约束，更为简洁
             // This check is redundant, we should not be able to initialize a claim status account at the same key.
             distributor.base==ctx.accounts.base.key(),
             DistributorCreatorMismatch
@@ -107,6 +107,8 @@ pub mod png_merkle_distributor {
         );
 
         // Mark it claimed and send the tokens.
+        // 1. rust局部变量不要用驼峰
+        // 2. amount不需要检查下吗？如果amount - claim_status.amount, 就不该往下执行了
         let claimedBefore = claim_status.amount;
         claim_status.amount = amount;
         let clock = Clock::get()?;
@@ -201,14 +203,14 @@ pub struct UpdateDistributor<'info> {
     /// Base key of the distributor.
     pub base: Signer<'info>,
 
-    #[account(mut)]
+    #[account(mut, has_one = base)]
     pub distributor: Account<'info, MerkleDistributor>,
 
     /// Payer to create the distributor.
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// The [System] program.
+    /// The [System] program. 这里需要system_program的原因是？
     pub system_program: Program<'info, System>,
 }
 
@@ -277,6 +279,7 @@ pub struct MerkleDistributor {
     /// Total amount of tokens that have been claimed.
     pub total_amount_claimed: u64,
     /// Number of nodes that have been claimed.
+    /// 我在思考这个字段还有没有存在的必要，因为这么一改它的语义完全变了。本来是有多少节点领取了（肯定是全部领走了）；现在是有可能部分领取
     pub num_nodes_claimed: u64,
 }
 
@@ -291,7 +294,7 @@ pub struct ClaimStatus {
     /// When the tokens were claimed.
     pub claimed_at: i64,
     /// Amount of tokens claimed.
-    pub amount: u64,
+    pub amount: u64, // 叫claimed_amount? 直接叫amount是不知道总的amount还是取走的amount
 }
 
 /// Emitted when tokens are claimed.
