@@ -14,6 +14,7 @@ const MAX_NUM_NODES = new BN(3);
 const MAX_TOTAL_CLAIM = new BN(1_000_000_000_000);
 const airDropMintKeypair = Keypair.generate();
 const dropKeypair = Keypair.generate();
+const creatorKeypair = Keypair.generate();
 const airDropMint = airDropMintKeypair.publicKey;
 const airDropMintDecimals = 6;
 let bump: number;
@@ -62,7 +63,7 @@ describe("merkle-distributor", () => {
             const maxTotalClaim = MAX_TOTAL_CLAIM;
 
             [distributor, bump] = await PublicKey.findProgramAddress(
-                [Buffer.from("MerkleDistributor"), dropKeypair.publicKey.toBuffer()],
+                [Buffer.from("MerkleDistributor"), creatorKeypair.publicKey.toBuffer()],
                 program.programId
             );
 
@@ -73,13 +74,13 @@ describe("merkle-distributor", () => {
                 new BN(maxNumNodes),
                 {
                     accounts: {
-                        base: dropKeypair.publicKey,
+                        base: creatorKeypair.publicKey,
                         distributor: distributor,
                         mint: airDropMint,
                         payer: provider.wallet.publicKey,
                         systemProgram: SystemProgram.programId,
                     },
-                    signers: [dropKeypair],
+                    signers: [creatorKeypair],
                 }
             );
 
@@ -195,12 +196,12 @@ describe("merkle-distributor", () => {
                 new BN(maxNumNodes),
                 {
                     accounts: {
-                        base: dropKeypair.publicKey,
+                        base: creatorKeypair.publicKey,
                         distributor: distributor,
                         payer: provider.wallet.publicKey,
                         systemProgram: SystemProgram.programId,
                     },
-                    signers: [dropKeypair],
+                    signers: [creatorKeypair],
                 }
             );
             const distributorAcc = await program.account.merkleDistributor.fetch(distributor);

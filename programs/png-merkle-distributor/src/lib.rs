@@ -65,7 +65,7 @@ pub mod png_merkle_distributor {
         require!(
             // This check is redundant, we should not be able to initialize a claim status account at the same key.
             distributor.base==ctx.accounts.base.key(),
-            UpdateMismatch
+            DistributorCreatorMismatch
         );
 
         distributor.root = root;
@@ -107,7 +107,7 @@ pub mod png_merkle_distributor {
         );
 
         // Mark it claimed and send the tokens.
-        let claimedBefore=claim_status.amount;
+        let claimedBefore = claim_status.amount;
         claim_status.amount = amount;
         let clock = Clock::get()?;
         claim_status.claimed_at = clock.unix_timestamp;
@@ -148,7 +148,7 @@ pub mod png_merkle_distributor {
             distributor.total_amount_claimed <= distributor.max_total_claim,
             ExceededMaxClaim
         );
-        if claimedBefore==0{
+        if claimedBefore == 0 {
             distributor.num_nodes_claimed = unwrap_int!(distributor.num_nodes_claimed.checked_add(1));
         }
         require!(
@@ -323,7 +323,7 @@ pub enum ErrorCode {
     Unauthorized,
     #[msg("Token account owner did not match intended owner")]
     OwnerMismatch,
-    #[msg("Base account mismatch")]
-    UpdateMismatch,
+    #[msg("Base account not match distributor creator")]
+    DistributorCreatorMismatch,
 }
 
