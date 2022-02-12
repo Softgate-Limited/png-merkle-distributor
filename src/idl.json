@@ -1,0 +1,390 @@
+{
+  "version": "0.0.0",
+  "name": "program_earn_vault",
+  "instructions": [
+    {
+      "name": "initVault",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "vaultSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "depositMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "depositHolder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "iouMint",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "deposit",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "iouMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "depositHolder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userDepositHolder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userIouHolder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "iouMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "depositHolder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userDepositHolder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userIouHolder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "iouAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "invest",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultSigner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "depositHolder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "investReceiver",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "investAuth",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "divest",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "depositHolder",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "divestFrom",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "investAuth",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "updateInvestedValue",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "investAuth",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "adminUpdateInvestedValue",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminAuth",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "transferAdminAuth",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminAuth",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "newAdminAuth",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "transferInvestAuth",
+      "accounts": [
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminAuth",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newInvestAuth",
+          "type": "publicKey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Vault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "depositMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "depositHolder",
+            "type": "publicKey"
+          },
+          {
+            "name": "iouMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "nonce",
+            "type": "u8"
+          },
+          {
+            "name": "investedValue",
+            "type": "u64"
+          },
+          {
+            "name": "adminAuth",
+            "type": "publicKey"
+          },
+          {
+            "name": "investAuth",
+            "type": "publicKey"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 300,
+      "name": "NotAllowedAdmin",
+      "msg": "not allowed admin"
+    },
+    {
+      "code": 301,
+      "name": "InvalidParam",
+      "msg": "invalid param"
+    },
+    {
+      "code": 302,
+      "name": "InsufficientBalance",
+      "msg": "insufficient balance"
+    },
+    {
+      "code": 303,
+      "name": "ZeroTotalDepositValue",
+      "msg": "zero total deposit value"
+    }
+  ]
+}
