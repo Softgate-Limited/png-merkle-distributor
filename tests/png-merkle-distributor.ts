@@ -170,7 +170,7 @@ describe("merkle-distributor", () => {
 
         });
 
-        it("update root", async () => {
+        it("add airdrop each 10", async () => {
             const updateAllKps = [kpOne, kpTwo, kpThree];
             await Promise.all(
                 updateAllKps.map(async (kp) => {
