@@ -62,11 +62,6 @@ pub mod png_merkle_distributor {
         max_num_nodes: u64,
     ) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
-        require!(
-            // This check is redundant, we should not be able to initialize a claim status account at the same key.
-            distributor.base==ctx.accounts.base.key(),
-            DistributorCreatorMismatch
-        );
 
         distributor.root = root;
         distributor.max_total_claim = max_total_claim;
@@ -87,7 +82,7 @@ pub mod png_merkle_distributor {
         let claim_status = &mut ctx.accounts.claim_status;
         require!(
             // This check is redundant, we should not be able to initialize a claim status account at the same key.
-            claim_status.amount<amount,
+            claim_status.claimed_amount<amount,
             ExceededMaxClaim
         );
 
@@ -106,9 +101,13 @@ pub mod png_merkle_distributor {
             InvalidProof
         );
 
+        let claimed_before = claim_status.claimed_amount;
+        require!(
+            amount-claimed_before>0,
+            ExceededMaxClaim
+        );
         // Mark it claimed and send the tokens.
-        let claimedBefore = claim_status.amount;
-        claim_status.amount = amount;
+        claim_status.claimed_amount = amount;
         let clock = Clock::get()?;
         claim_status.claimed_at = clock.unix_timestamp;
         claim_status.claimant = claimant_account.key();
@@ -138,7 +137,7 @@ pub mod png_merkle_distributor {
                 },
             )
                 .with_signer(&[&seeds[..]]),
-            amount.checked_sub(claimedBefore).unwrap(),
+            amount.checked_sub(claimed_before).unwrap(),
         )?;
 
         let distributor = &mut ctx.accounts.distributor;
@@ -148,7 +147,7 @@ pub mod png_merkle_distributor {
             distributor.total_amount_claimed <= distributor.max_total_claim,
             ExceededMaxClaim
         );
-        if claimedBefore == 0 {
+        if claimed_before == 0 {
             distributor.num_nodes_claimed = unwrap_int!(distributor.num_nodes_claimed.checked_add(1));
             require!(
                 distributor.num_nodes_claimed <= distributor.max_num_nodes,
@@ -201,15 +200,13 @@ pub struct UpdateDistributor<'info> {
     /// Base key of the distributor.
     pub base: Signer<'info>,
 
-    #[account(mut)]
+    #[account(mut, has_one = base @ ErrorCode::DistributorCreatorMismatch)]
     pub distributor: Account<'info, MerkleDistributor>,
 
     /// Payer to create the distributor.
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// The [System] program.
-    pub system_program: Program<'info, System>,
 }
 
 
@@ -291,7 +288,7 @@ pub struct ClaimStatus {
     /// When the tokens were claimed.
     pub claimed_at: i64,
     /// Amount of tokens claimed.
-    pub amount: u64,
+    pub claimed_amount: u64,
 }
 
 /// Emitted when tokens are claimed.
