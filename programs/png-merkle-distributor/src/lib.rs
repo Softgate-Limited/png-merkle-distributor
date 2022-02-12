@@ -101,11 +101,12 @@ pub mod png_merkle_distributor {
             InvalidProof
         );
 
-        let claimed_before = claim_status.claimed_amount;
         require!(
-            amount-claimed_before>0,
+            amount-claim_status.claimed_amount>0,
             ExceededMaxClaim
         );
+        let distribute_num = amount.checked_sub(claim_status.claimed_amount).unwrap();
+
         // Mark it claimed and send the tokens.
         claim_status.claimed_amount = amount;
         let clock = Clock::get()?;
@@ -137,7 +138,7 @@ pub mod png_merkle_distributor {
                 },
             )
                 .with_signer(&[&seeds[..]]),
-            amount.checked_sub(claimed_before).unwrap(),
+            distribute_num,
         )?;
 
         let distributor = &mut ctx.accounts.distributor;
@@ -147,7 +148,7 @@ pub mod png_merkle_distributor {
             distributor.total_amount_claimed <= distributor.max_total_claim,
             ExceededMaxClaim
         );
-        if claimed_before == 0 {
+        if distribute_num == amount {
             distributor.num_nodes_claimed = unwrap_int!(distributor.num_nodes_claimed.checked_add(1));
             require!(
                 distributor.num_nodes_claimed <= distributor.max_num_nodes,
@@ -158,7 +159,7 @@ pub mod png_merkle_distributor {
         emit!(ClaimedEvent {
             index,
             claimant: claimant_account.key(),
-            amount
+            distribute_num
         });
         Ok(())
     }
@@ -299,7 +300,7 @@ pub struct ClaimedEvent {
     /// User that claimed.
     pub claimant: Pubkey,
     /// Amount of tokens to distribute.
-    pub amount: u64,
+    pub distribute_num: u64,
 }
 
 /// Error codes.
