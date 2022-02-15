@@ -14,6 +14,7 @@ const MAX_NUM_NODES = new BN(3);
 const MAX_TOTAL_CLAIM = new BN(1_000_000_000_000);
 const airDropMintKeypair = Keypair.generate();
 const creatorKeypair = Keypair.generate();
+const creatorKeypair2 = Keypair.generate();
 const airDropMint = airDropMintKeypair.publicKey;
 const airDropMintDecimals = 6;
 const maxNumNodes = MAX_NUM_NODES;
@@ -76,7 +77,7 @@ describe("png-merkle-distributor", () => {
             new BN(maxNumNodes),
             {
                 accounts: {
-                    base: creatorKeypair.publicKey,
+                    adminKey: creatorKeypair.publicKey,
                     distributor: distributor,
                     mint: airDropMint,
                     payer: provider.wallet.publicKey,
@@ -122,7 +123,7 @@ describe("png-merkle-distributor", () => {
                 const amount = new BN(100 + index);
                 const proof = tree.getProof(index, kp.publicKey, amount);
                 let [claimStatus, claimNonce] = await PublicKey.findProgramAddress(
-                    [Buffer.from("ClaimStatus"), new BN(index).toArrayLike(Buffer, "le", 8), distributor.toBuffer()],
+                    [Buffer.from("ClaimStatus"), distributor.toBuffer() ,kp.publicKey.toBuffer()],
                     program.programId
                 );
                 await provider.send(
@@ -167,6 +168,22 @@ describe("png-merkle-distributor", () => {
 
     });
 
+    it("transfer admin auth",async ()=>{
+        await program.rpc.updateAdminKey(
+            creatorKeypair2.publicKey,
+            {
+                accounts: {
+                    adminKey: creatorKeypair.publicKey,
+                    distributor: distributor,
+                    payer: provider.wallet.publicKey,
+                },
+                signers: [creatorKeypair],
+            }
+        );
+        const distributorAcc = await program.account.merkleDistributor.fetch(distributor);
+        assert.equal(distributorAcc.adminKey.toString(), creatorKeypair2.publicKey.toString());
+    })
+
     it("10 additional airdrops and update root", async () => {
         claimAmountOne = claimAmountOne.add(new BN(10));
         claimAmountTwo = claimAmountTwo.add(new BN(10));
@@ -180,14 +197,13 @@ describe("png-merkle-distributor", () => {
         await program.rpc.updateDistributor(
             toBytes32Array(root),
             new BN(maxTotalClaim),
-            new BN(maxNumNodes),
             {
                 accounts: {
-                    base: creatorKeypair.publicKey,
+                    adminKey: creatorKeypair2.publicKey,
                     distributor: distributor,
                     payer: provider.wallet.publicKey,
                 },
-                signers: [creatorKeypair],
+                signers: [creatorKeypair2],
             }
         );
         const distributorAcc = await program.account.merkleDistributor.fetch(distributor);
@@ -200,7 +216,7 @@ describe("png-merkle-distributor", () => {
                 const amount = new BN(110 + index);
                 const proof = tree.getProof(index, kp.publicKey, amount);
                 const [claimStatus, claimNonce] = await PublicKey.findProgramAddress(
-                    [Buffer.from("ClaimStatus"), new BN(index).toArrayLike(Buffer, "le", 8), distributor.toBuffer()],
+                    [Buffer.from("ClaimStatus"),  distributor.toBuffer() , kp.publicKey.toBuffer()],
                     program.programId
                 );
 

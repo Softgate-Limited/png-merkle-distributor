@@ -41,7 +41,9 @@ pub mod png_merkle_distributor {
     ) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
 
-        distributor.base = ctx.accounts.base.key();
+        distributor.base = ctx.accounts.admin_key.key();
+        distributor.admin_key = ctx.accounts.admin_key.key();
+
         distributor.bump = bump;
 
         distributor.root = root;
@@ -59,13 +61,12 @@ pub mod png_merkle_distributor {
         ctx: Context<UpdateDistributor>,
         root: [u8; 32],
         max_total_claim: u64,
-        max_num_nodes: u64,
     ) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
 
         distributor.root = root;
         distributor.max_total_claim = max_total_claim;
-        distributor.max_num_nodes = max_num_nodes;
+        distributor.max_num_nodes = 0;
 
         Ok(())
     }
@@ -101,7 +102,7 @@ pub mod png_merkle_distributor {
             InvalidProof
         );
 
-        let claim_amount = amount.checked_sub(claim_status.claimed_amount).unwrap();
+        let claim_amount = amount.checked_sub(claim_status.claimed_amount);
 
         // Mark it claimed and send the tokens.
         claim_status.claimed_amount = amount;
@@ -134,7 +135,7 @@ pub mod png_merkle_distributor {
                 },
             )
             .with_signer(&[&seeds[..]]),
-            claim_amount,
+            claim_amount.unwrap(),
         )?;
 
         let distributor = &mut ctx.accounts.distributor;
@@ -144,7 +145,7 @@ pub mod png_merkle_distributor {
             distributor.total_amount_claimed <= distributor.max_total_claim,
             ExceededMaxClaim
         );
-        if claim_amount == amount {
+        if claim_amount.unwrap() == amount {
             distributor.num_nodes_claimed =
                 unwrap_int!(distributor.num_nodes_claimed.checked_add(1));
             require!(
@@ -156,8 +157,18 @@ pub mod png_merkle_distributor {
         emit!(ClaimedEvent {
             index,
             claimant: claimant_account.key(),
-            claim_amount
+            claim_amount: claim_amount.unwrap(),
         });
+        Ok(())
+    }
+
+    pub fn update_admin_key(
+        ctx: Context<UpdateAdminKey>,
+        new_key: Pubkey
+    ) -> ProgramResult {
+        let distributor = &mut ctx.accounts.distributor;
+        distributor.admin_key=new_key;
+
         Ok(())
     }
 }
@@ -167,14 +178,14 @@ pub mod png_merkle_distributor {
 #[instruction(bump: u8)]
 pub struct NewDistributor<'info> {
     /// Base key of the distributor.
-    pub base: Signer<'info>,
+    pub admin_key: Signer<'info>,
 
     /// [MerkleDistributor].
     #[account(
     init,
     seeds = [
     b"MerkleDistributor".as_ref(),
-    base.key().to_bytes().as_ref()
+    admin_key.key().to_bytes().as_ref()
     ],
     bump = bump,
     payer = payer
@@ -195,10 +206,10 @@ pub struct NewDistributor<'info> {
 /// Accounts for [png_merkle_distributor::new_distributor].
 #[derive(Accounts)]
 pub struct UpdateDistributor<'info> {
-    /// Base key of the distributor.
-    pub base: Signer<'info>,
+    /// Admin key of the distributor.
+    pub admin_key: Signer<'info>,
 
-    #[account(mut, has_one = base @ ErrorCode::DistributorCreatorMismatch)]
+    #[account(mut, has_one = admin_key @ ErrorCode::DistributorAdminMismatch)]
     pub distributor: Account<'info, MerkleDistributor>,
 
     /// Payer to create the distributor.
@@ -219,8 +230,8 @@ pub struct Claim<'info> {
     init_if_needed,
     seeds = [
     b"ClaimStatus".as_ref(),
-    index.to_le_bytes().as_ref(),
-    distributor.key().to_bytes().as_ref()
+    distributor.key().to_bytes().as_ref(),
+    claimant.key().to_bytes().as_ref()
     ],
     bump = _bump,
     payer = payer
@@ -249,12 +260,26 @@ pub struct Claim<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+#[derive(Accounts)]
+pub struct UpdateAdminKey<'info> {
+    pub admin_key: Signer<'info>,
+
+    #[account(mut, has_one = admin_key @ ErrorCode::DistributorAdminMismatch)]
+    pub distributor: Account<'info, MerkleDistributor>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+}
+
+
 /// State for the account which distributes tokens.
 #[account]
 #[derive(Default)]
 pub struct MerkleDistributor {
     /// Base key used to generate the PDA.
     pub base: Pubkey,
+    /// Admin key used to generate the PDA.
+    pub admin_key: Pubkey,
     /// Bump seed.
     pub bump: u8,
 
@@ -313,8 +338,8 @@ pub enum ErrorCode {
     Unauthorized,
     #[msg("Token account owner did not match intended owner")]
     OwnerMismatch,
-    #[msg("Base account not match distributor creator")]
-    DistributorCreatorMismatch,
+    #[msg("Admin account not match distributor creator")]
+    DistributorAdminMismatch,
     #[msg("no claimable amount")]
     NoClaimableAmount,
 }
