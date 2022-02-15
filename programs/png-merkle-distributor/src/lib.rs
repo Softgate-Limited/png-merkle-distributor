@@ -42,7 +42,7 @@ pub mod png_merkle_distributor {
         let distributor = &mut ctx.accounts.distributor;
 
         distributor.base = ctx.accounts.base.key();
-        distributor.admin_key = ctx.accounts.admin_key.key();
+        distributor.admin_auth = ctx.accounts.admin_auth.key();
 
         distributor.bump = bump;
 
@@ -163,7 +163,7 @@ pub mod png_merkle_distributor {
 
     pub fn update_admin_key(ctx: Context<UpdateAdminKey>) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
-        distributor.admin_key = ctx.accounts.new_key.key();
+        distributor.admin_auth = ctx.accounts.new_admin_auth.key();
 
         Ok(())
     }
@@ -176,7 +176,7 @@ pub struct NewDistributor<'info> {
     /// Base key of the distributor.
     pub base: Signer<'info>,
     /// Admin key of the distributor.
-    pub admin_key: Signer<'info>,
+    pub admin_auth: Signer<'info>,
 
     /// [MerkleDistributor].
     #[account(
@@ -205,9 +205,9 @@ pub struct NewDistributor<'info> {
 #[derive(Accounts)]
 pub struct UpdateDistributor<'info> {
     /// Admin key of the distributor.
-    pub admin_key: Signer<'info>,
+    pub admin_auth: Signer<'info>,
 
-    #[account(mut, has_one = admin_key @ ErrorCode::DistributorAdminMismatch)]
+    #[account(mut, has_one = admin_auth @ ErrorCode::DistributorAdminMismatch)]
     pub distributor: Account<'info, MerkleDistributor>,
 
     /// Payer to create the distributor.
@@ -260,11 +260,11 @@ pub struct Claim<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateAdminKey<'info> {
-    pub new_key: Signer<'info>,
+    pub new_admin_auth: Signer<'info>,
 
-    pub admin_key: Signer<'info>,
+    pub admin_auth: Signer<'info>,
 
-    #[account(mut, has_one = admin_key @ ErrorCode::DistributorAdminMismatch)]
+    #[account(mut, has_one = admin_auth @ ErrorCode::DistributorAdminMismatch)]
     pub distributor: Account<'info, MerkleDistributor>,
 
     #[account(mut)]
@@ -278,7 +278,7 @@ pub struct MerkleDistributor {
     /// Base key used to generate the PDA.
     pub base: Pubkey,
     /// Admin key used to generate the PDA.
-    pub admin_key: Pubkey,
+    pub admin_auth: Pubkey,
     /// Bump seed.
     pub bump: u8,
 

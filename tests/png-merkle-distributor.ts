@@ -78,7 +78,7 @@ describe("png-merkle-distributor", () => {
             {
                 accounts: {
                     base: creatorKeypair.publicKey,
-                    adminKey: creatorKeypair.publicKey,
+                    adminAuth: creatorKeypair.publicKey,
                     distributor: distributor,
                     mint: airDropMint,
                     payer: provider.wallet.publicKey,
@@ -173,8 +173,8 @@ describe("png-merkle-distributor", () => {
         await program.rpc.updateAdminKey(
             {
                 accounts: {
-                    newKey: creatorKeypair2.publicKey,
-                    adminKey: creatorKeypair.publicKey,
+                    newAdminAuth: creatorKeypair2.publicKey,
+                    adminAuth: creatorKeypair.publicKey,
                     distributor: distributor,
                     payer: provider.wallet.publicKey,
                 },
@@ -182,7 +182,7 @@ describe("png-merkle-distributor", () => {
             }
         );
         const distributorAcc = await program.account.merkleDistributor.fetch(distributor);
-        assert.equal(distributorAcc.adminKey.toString(), creatorKeypair2.publicKey.toString());
+        assert.equal(distributorAcc.adminAuth.toString(), creatorKeypair2.publicKey.toString());
     })
 
     it("10 additional airdrops and update root", async () => {
@@ -201,7 +201,7 @@ describe("png-merkle-distributor", () => {
             new BN(maxNumNodes),
             {
                 accounts: {
-                    adminKey: creatorKeypair2.publicKey,
+                    adminAuth: creatorKeypair2.publicKey,
                     distributor: distributor,
                     payer: provider.wallet.publicKey,
                 },
