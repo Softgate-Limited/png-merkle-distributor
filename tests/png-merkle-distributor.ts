@@ -123,7 +123,7 @@ describe("png-merkle-distributor", () => {
                 const amount = new BN(100 + index);
                 const proof = tree.getProof(index, kp.publicKey, amount);
                 let [claimStatus, claimNonce] = await PublicKey.findProgramAddress(
-                    [Buffer.from("ClaimStatus"), distributor.toBuffer() ,kp.publicKey.toBuffer()],
+                    [Buffer.from("ClaimStatus"), distributor.toBuffer(), kp.publicKey.toBuffer()],
                     program.programId
                 );
                 await provider.send(
@@ -168,7 +168,7 @@ describe("png-merkle-distributor", () => {
 
     });
 
-    it("transfer admin auth",async ()=>{
+    it("transfer admin auth", async () => {
         await program.rpc.updateAdminKey(
             creatorKeypair2.publicKey,
             {
@@ -216,7 +216,7 @@ describe("png-merkle-distributor", () => {
                 const amount = new BN(110 + index);
                 const proof = tree.getProof(index, kp.publicKey, amount);
                 const [claimStatus, claimNonce] = await PublicKey.findProgramAddress(
-                    [Buffer.from("ClaimStatus"),  distributor.toBuffer() , kp.publicKey.toBuffer()],
+                    [Buffer.from("ClaimStatus"), distributor.toBuffer(), kp.publicKey.toBuffer()],
                     program.programId
                 );
 

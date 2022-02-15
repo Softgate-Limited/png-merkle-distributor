@@ -134,7 +134,7 @@ pub mod png_merkle_distributor {
                     authority: ctx.accounts.distributor.to_account_info(),
                 },
             )
-            .with_signer(&[&seeds[..]]),
+                .with_signer(&[&seeds[..]]),
             claim_amount.unwrap(),
         )?;
 
@@ -164,10 +164,10 @@ pub mod png_merkle_distributor {
 
     pub fn update_admin_key(
         ctx: Context<UpdateAdminKey>,
-        new_key: Pubkey
+        new_key: Pubkey,
     ) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
-        distributor.admin_key=new_key;
+        distributor.admin_key = new_key;
 
         Ok(())
     }
@@ -203,7 +203,7 @@ pub struct NewDistributor<'info> {
     pub system_program: Program<'info, System>,
 }
 
-/// Accounts for [png_merkle_distributor::new_distributor].
+/// Accounts for [png_merkle_distributor::update_distributor].
 #[derive(Accounts)]
 pub struct UpdateDistributor<'info> {
     /// Admin key of the distributor.
@@ -270,7 +270,6 @@ pub struct UpdateAdminKey<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 }
-
 
 /// State for the account which distributes tokens.
 #[account]
