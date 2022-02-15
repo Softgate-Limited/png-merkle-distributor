@@ -41,7 +41,7 @@ pub mod png_merkle_distributor {
     ) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
 
-        distributor.base = ctx.accounts.admin_key.key();
+        distributor.base = ctx.accounts.base.key();
         distributor.admin_key = ctx.accounts.admin_key.key();
 
         distributor.bump = bump;
@@ -61,12 +61,14 @@ pub mod png_merkle_distributor {
         ctx: Context<UpdateDistributor>,
         root: [u8; 32],
         max_total_claim: u64,
+        max_num_nodes: u64,
     ) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
 
         distributor.root = root;
         distributor.max_total_claim = max_total_claim;
-        distributor.max_num_nodes = 0;
+        distributor.max_num_nodes = max_num_nodes;
+        distributor.num_nodes_claimed = 0;
 
         Ok(())
     }
@@ -102,7 +104,7 @@ pub mod png_merkle_distributor {
             InvalidProof
         );
 
-        let claim_amount = amount.checked_sub(claim_status.claimed_amount);
+        let claim_amount = amount.checked_sub(claim_status.claimed_amount).unwrap();
 
         // Mark it claimed and send the tokens.
         claim_status.claimed_amount = amount;
@@ -134,8 +136,8 @@ pub mod png_merkle_distributor {
                     authority: ctx.accounts.distributor.to_account_info(),
                 },
             )
-                .with_signer(&[&seeds[..]]),
-            claim_amount.unwrap(),
+            .with_signer(&[&seeds[..]]),
+            claim_amount,
         )?;
 
         let distributor = &mut ctx.accounts.distributor;
@@ -145,29 +147,23 @@ pub mod png_merkle_distributor {
             distributor.total_amount_claimed <= distributor.max_total_claim,
             ExceededMaxClaim
         );
-        if claim_amount.unwrap() == amount {
-            distributor.num_nodes_claimed =
-                unwrap_int!(distributor.num_nodes_claimed.checked_add(1));
-            require!(
-                distributor.num_nodes_claimed <= distributor.max_num_nodes,
-                ExceededMaxNumNodes
-            );
-        }
+        distributor.num_nodes_claimed = unwrap_int!(distributor.num_nodes_claimed.checked_add(1));
+        require!(
+            distributor.num_nodes_claimed <= distributor.max_num_nodes,
+            ExceededMaxNumNodes
+        );
 
         emit!(ClaimedEvent {
             index,
             claimant: claimant_account.key(),
-            claim_amount: claim_amount.unwrap(),
+            claim_amount: claim_amount,
         });
         Ok(())
     }
 
-    pub fn update_admin_key(
-        ctx: Context<UpdateAdminKey>,
-        new_key: Pubkey,
-    ) -> ProgramResult {
+    pub fn update_admin_key(ctx: Context<UpdateAdminKey>) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
-        distributor.admin_key = new_key;
+        distributor.admin_key = ctx.accounts.new_key.key();
 
         Ok(())
     }
@@ -178,6 +174,8 @@ pub mod png_merkle_distributor {
 #[instruction(bump: u8)]
 pub struct NewDistributor<'info> {
     /// Base key of the distributor.
+    pub base: Signer<'info>,
+    /// Admin key of the distributor.
     pub admin_key: Signer<'info>,
 
     /// [MerkleDistributor].
@@ -185,7 +183,7 @@ pub struct NewDistributor<'info> {
     init,
     seeds = [
     b"MerkleDistributor".as_ref(),
-    admin_key.key().to_bytes().as_ref()
+    base.key().to_bytes().as_ref()
     ],
     bump = bump,
     payer = payer
@@ -262,6 +260,8 @@ pub struct Claim<'info> {
 
 #[derive(Accounts)]
 pub struct UpdateAdminKey<'info> {
+    pub new_key: Signer<'info>,
+
     pub admin_key: Signer<'info>,
 
     #[account(mut, has_one = admin_key @ ErrorCode::DistributorAdminMismatch)]

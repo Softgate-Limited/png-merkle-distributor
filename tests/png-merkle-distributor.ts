@@ -77,6 +77,7 @@ describe("png-merkle-distributor", () => {
             new BN(maxNumNodes),
             {
                 accounts: {
+                    base: creatorKeypair.publicKey,
                     adminKey: creatorKeypair.publicKey,
                     distributor: distributor,
                     mint: airDropMint,
@@ -170,14 +171,14 @@ describe("png-merkle-distributor", () => {
 
     it("transfer admin auth", async () => {
         await program.rpc.updateAdminKey(
-            creatorKeypair2.publicKey,
             {
                 accounts: {
+                    newKey: creatorKeypair2.publicKey,
                     adminKey: creatorKeypair.publicKey,
                     distributor: distributor,
                     payer: provider.wallet.publicKey,
                 },
-                signers: [creatorKeypair],
+                signers: [creatorKeypair, creatorKeypair2],
             }
         );
         const distributorAcc = await program.account.merkleDistributor.fetch(distributor);
@@ -197,6 +198,7 @@ describe("png-merkle-distributor", () => {
         await program.rpc.updateDistributor(
             toBytes32Array(root),
             new BN(maxTotalClaim),
+            new BN(maxNumNodes),
             {
                 accounts: {
                     adminKey: creatorKeypair2.publicKey,
@@ -208,6 +210,7 @@ describe("png-merkle-distributor", () => {
         );
         const distributorAcc = await program.account.merkleDistributor.fetch(distributor);
         assert.equal(distributorAcc.root.toString(), toBytes32Array(root).toString());
+        assert.equal(distributorAcc.numNodesClaimed, 0);
     })
 
     it("claim2 ,after should equal before add 10", async () => {
