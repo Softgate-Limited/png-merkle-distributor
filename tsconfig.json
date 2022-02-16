@@ -2,7 +2,7 @@
   "compilerOptions": {
     "types": ["mocha", "chai"],
     "typeRoots": [
-      "../png-merkle-distributor1/node_modules/@types"
+      "../png-merkle-distributor/node_modules/@types"
     ],
     "lib": ["es2015"],
     "module": "commonjs",

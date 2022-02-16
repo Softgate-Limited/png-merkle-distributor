@@ -170,7 +170,7 @@ describe("png-merkle-distributor", () => {
     });
 
     it("transfer admin auth", async () => {
-        await program.rpc.updateAdminKey(
+        await program.rpc.updateAdminAuth(
             {
                 accounts: {
                     newAdminAuth: creatorKeypair2.publicKey,

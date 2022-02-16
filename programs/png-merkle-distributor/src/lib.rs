@@ -84,7 +84,6 @@ pub mod png_merkle_distributor {
     ) -> ProgramResult {
         let claim_status = &mut ctx.accounts.claim_status;
         require!(
-            // This check is redundant, we should not be able to initialize a claim status account at the same key.
             claim_status.claimed_amount < amount,
             NoClaimableAmount
         );
@@ -161,7 +160,7 @@ pub mod png_merkle_distributor {
         Ok(())
     }
 
-    pub fn update_admin_key(ctx: Context<UpdateAdminKey>) -> ProgramResult {
+    pub fn update_admin_auth(ctx: Context<UpdateAdminAuth>) -> ProgramResult {
         let distributor = &mut ctx.accounts.distributor;
         distributor.admin_auth = ctx.accounts.new_admin_auth.key();
 
@@ -259,7 +258,7 @@ pub struct Claim<'info> {
 }
 
 #[derive(Accounts)]
-pub struct UpdateAdminKey<'info> {
+pub struct UpdateAdminAuth<'info> {
     pub new_admin_auth: Signer<'info>,
 
     pub admin_auth: Signer<'info>,
